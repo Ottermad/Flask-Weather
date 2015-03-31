@@ -67,11 +67,6 @@ def weather():
     return render_template("weather.html")
 
 
-@app.route("/contact")
-def contact():
-    return "contact"
-
-
 @app.route("/get_weekly_summary", methods=("POST", "GET"))
 def get_weekly_summary():
     postcode = request.form["postcode"]
