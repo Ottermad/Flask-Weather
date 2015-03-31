@@ -1,0 +1,199 @@
+{% extends "layout.html" %}
+{% block body %}
+	<div class="row">
+		<!-- div to contain controls -->
+		<div id="controls" class="col-md-3">
+			<form class="form">
+				<div class="form-group">
+					<label for="postcode">Post Code:</label>
+					<input type="text" name="postcode" id="postcode">
+				</div>
+			</form>
+			<ul id="get-forecast-buttons">
+				<li>
+					<a id="get_weekly_forcast" class="btn btn-success">
+						Get Weekly Forcast
+					</a>
+				</li>
+				<li>
+					<a id="get_daily_forcast" class="btn btn-success">
+						Get Next 24 hours Forcast
+					</a>
+				</li>
+				<li>
+					<a id="get_detailed_forcast" class="btn btn-success">
+						Get Detailed Forecast for next 24 hours
+					</a>
+				</li>
+			</ul>
+		</div>
+		
+		<!-- div to contain the forecast -->
+		<div id="response" class="col-md-9">
+			<table id="warningsTable" class="table hide table-condensed table-striped">
+				<thead>
+					<tr>
+						<th>Title</th>
+						<th>Expires</th>
+						<th>URL</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+			<table id="resultTable" class="table hide table-condensed table-striped">
+				<thead></thead>
+				<tbody></tbody>
+			</table>
+		</div>
+	</div>
+{% endblock %}
+{% block ajax %}
+	<script type="text/javascript">
+		function summaryRequestJSONParser (json, spinner) {
+			var tableBodyHTML = "";
+			var tableHeadHTML = "<tr><th>Day</th><th>Summary</th></tr>";
+
+			var warningBodyHTML = "";
+
+			for (var i = 0; i < json[0].length; i++) {
+				var day = json[0][i];
+				var dayName = day[0];
+				var forecast = day[1];
+
+				var tableRow = "<tr><td>" + dayName + "</td><td>" + forecast + "</td></tr>";
+				tableBodyHTML += tableRow;
+
+			}
+
+			for (var i = 0; i < json[1].length; i++) {
+				var warning = json[1][i];
+				var title = warning[0];
+				var expires = warning[1];
+				var url = warning[2];
+
+				var tableRow = "<tr><td>" + title + "</td><td>" + expires + "</td><td><a href='" + url + "'>" + url + "</a></td></tr>";
+				warningBodyHTML += tableRow;
+			}
+
+			$('#resultTable tbody').empty();
+			$('#resultTable thead').empty();
+			$('#warningsTable tbody').empty();
+			$('#resultTable thead').append(tableHeadHTML);
+			$('#resultTable tbody').append(tableBodyHTML);
+			$('#warningsTable tbody').append(warningBodyHTML);
+			spinner.stop();
+			$('#resultTable').removeClass("hide");
+			$('#warningsTable').removeClass("hide");
+		}
+
+		function detailRequestJSONParser (json, spinner) {
+			console.log(json);
+			var tableBodyHTML = "";
+			var tableHeadHTML = "<tr><th>Date</th><th>Summary</th><th>Temperature (&#176;C)</th><th>Apparent Temperature (&#176;C)</th><th>Precip Probability</th><th>Precip Type</th></tr>";
+
+			var warningBodyHTML = "";
+
+			for (var i = 0; i < json[0].length; i++) {
+				var day = json[0][i];
+				var datetime = day[0].split(" ");
+				var time = datetime[0];
+				var date = datetime[1];
+				var summary = day[1];
+				var temperature = day[2];
+				var apparentTemperature = day[3];
+				var precipProbability = day[4] * 100;
+				var precipType = day[5];
+
+				var tableRow = "<tr><td>" + time + "<br>" + date + "</td><td>" + summary + "</td><td>" + temperature + "</td><td>" + apparentTemperature + "</td><td>" + precipProbability + "%</td><td>" + precipType + "</td></tr>";
+				tableBodyHTML += tableRow;
+
+			}
+
+			for (var i = 0; i < json[1].length; i++) {
+				var warning = json[1][i];
+				var title = warning[0];
+				var expires = warning[1];
+				var url = warning[2];
+
+				var tableRow = "<tr><td>" + title + "</td><td>" + expires + "</td><td><a href='" + url + "'>" + url + "</a></td></tr>";
+				warningBodyHTML += tableRow;
+			}
+
+			$('#resultTable tbody').empty();
+			$('#resultTable thead').empty();
+			$('#warningsTable tbody').empty();
+			$('#resultTable thead').append(tableHeadHTML);
+			$('#resultTable tbody').append(tableBodyHTML);
+			$('#warningsTable tbody').append(warningBodyHTML);
+			spinner.stop();
+			$('#resultTable').removeClass("hide");
+			$('#warningsTable').removeClass("hide");
+		}
+
+		
+
+		function makeRequest (url, type) { 
+			var postcode = document.getElementById("postcode").value;
+			var getWeatherRequest = new XMLHttpRequest();
+
+			getWeatherRequest.onreadystatechange = function () {
+
+				if (getWeatherRequest.readyState == 4 && getWeatherRequest.status == 200) {
+					// Parse the JSON
+					var jsonString = getWeatherRequest.responseText;
+					console.log(jsonString);
+					var json = JSON.parse(jsonString);
+					if (type == "summary") {
+						summaryRequestJSONParser(json, spinner);
+					} else if (type == "detailed24") {
+						detailRequestJSONParser(json, spinner);
+					}
+				}
+
+			}
+
+			getWeatherRequest.open("POST", url, true);
+			getWeatherRequest.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+			getWeatherRequest.send("postcode=" + postcode);
+			var opts = {
+				lines: 13, // The number of lines to draw
+				length: 20, // The length of each line
+				width: 10, // The line thickness
+				radius: 30, // The radius of the inner circle
+				corners: 1, // Corner roundness (0..1)
+				rotate: 0, // The rotation offset
+				direction: 1, // 1: clockwise, -1: counterclockwise
+				color: '#5bc0de', // #rgb or #rrggbb or array of colors
+				speed: 1, // Rounds per second
+				trail: 60, // Afterglow percentage
+				shadow: false, // Whether to render a shadow
+				hwaccel: false, // Whether to use hardware acceleration
+				className: 'spinner', // The CSS class to assign to the spinner
+				zIndex: 2e9, // The z-index (defaults to 2000000000)
+				top: '50%', // Top position relative to parent
+				left: '50%' // Left position relative to parent
+			};
+			var target = document.getElementById('response');
+			$('#resultTable').addClass("hide");
+			$('#warningsTable').addClass("hide");
+			var spinner = new Spinner(opts).spin(target);
+		}
+
+		$(document).ready(function () {
+			$("#get_weekly_forcast").click(function (e) {
+				console.log("button clicked");
+				makeRequest(("{{ url_for("get_weekly_summary") }}"), "summary");
+			});
+
+			$("#get_daily_forcast").click(function (e) {
+				console.log("button clicked");
+				makeRequest(("{{ url_for("get_today_summary") }}"), "summary");
+			});
+
+			$("#get_detailed_forcast").click(function (e) {
+				console.log("button clicked");
+				makeRequest(("{{ url_for("get_detailed_summary") }}"), "detailed24");
+			});
+		});
+	</script>
+{% endblock %}

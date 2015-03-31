@@ -1,0 +1,30 @@
+body {
+  padding-top: 5em;
+}
+
+.hide {
+	display: hidden;
+}
+
+#get-forecast-buttons {
+	list-style: none;
+	padding: 0;
+    list-style-type: none;
+
+}
+
+#get-forecast-buttons > li {
+	padding-bottom: 0.2em;
+}
+
+#response {
+	min-height: 500px;
+}
+
+#resultTable > tbody > tr:hover {
+	background: #5bc0de;
+}
+
+#warningsTable > tbody > tr:hover {
+	background: #f0ad4e;
+}
