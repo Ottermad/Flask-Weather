@@ -6,20 +6,30 @@ import re
 import pprint
 import datetime
 import json
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, request
 
 
 # Constants
 DEBUG = True
 API_KEY = open("APIKEY.txt", "r").readline()
-DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+DAYS_OF_WEEK = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+]
 
 # Flask Setup
 app = Flask(__name__)
 
+
 # Functions
 def make_request(postcode):
-    postcode_to_lat_lng_url = "http://uk-postcodes.com/postcode/{}.json".format(postcode)
+    postcode_to_lat_lng_url = "http://uk-postcodes.com/postcode/{}.json" \
+        .format(postcode)
     print(postcode_to_lat_lng_url)
     postcode_request = requests.get(postcode_to_lat_lng_url)
     postcode_data = postcode_request.json()
@@ -28,11 +38,13 @@ def make_request(postcode):
     lat = geo_data["lat"]
     lng = geo_data["lng"]
 
-    forecast_url = "https://api.forecast.io/forecast/{}/{},{}?units=uk".format(API_KEY, lat, lng)
+    forecast_url = "https://api.forecast.io/forecast/{}/{},{}?units=uk" \
+        .format(API_KEY, lat, lng)
     print(forecast_url)
     forecast_request = requests.get(forecast_url)
     forecast_data = forecast_request.json()
     return forecast_data
+
 
 def warnings(forecast_data):
     try:
@@ -48,14 +60,17 @@ def warnings(forecast_data):
         warning_data = [["No Warnings", "N/A", "N/A"]]
     return warning_data
 
+
 # Routes
 @app.route("/")
 def weather():
     return render_template("weather.html")
 
+
 @app.route("/contact")
 def contact():
     return "contact"
+
 
 @app.route("/get_weekly_summary", methods=("POST", "GET"))
 def get_weekly_summary():
@@ -98,7 +113,7 @@ def get_today_summary():
             date = datetime.datetime.fromtimestamp(unix_time_int)
             summary = data_block["summary"]
             output_data.append([date.strftime("%H:%M %d-%m-%Y"), summary])
-            c+=1;
+            c += 1
 
         new_output_data = []
         first = True
@@ -108,7 +123,9 @@ def get_today_summary():
                 new_output_data.append(item)
             else:
                 if new_output_data[-1][1] == item[1]:
-                    new_output_data[-1][0] = new_output_data[-1][0][:15] + " to " + item[0]
+                    new_output_data[-1][0] = "{} to {}".format(
+                        new_output_data[-1][0][:15], item[0]
+                    )
                 else:
                     new_output_data.append(item)
 
@@ -117,8 +134,6 @@ def get_today_summary():
         return json.dumps([new_output_data, warning_data])
     return json.dumps("No Postcode")
 
-def get_tomorrow_summary(postcode):
-    pass
 
 @app.route("/get_detailed_summary", methods=["POST", "GET"])
 def get_detailed_summary():
@@ -144,8 +159,17 @@ def get_detailed_summary():
                 precip_type = data_block["precipType"]
             else:
                 precip_type = "none"
-            output_data.append([date.strftime("%H:%M %d-%m-%Y"), summary, temperature, apparent_temperature, precip_probability, precip_type])
-            c+=1;
+            output_data.append(
+                [
+                    date.strftime("%H:%M %d-%m-%Y"),
+                    summary,
+                    temperature,
+                    apparent_temperature,
+                    precip_probability,
+                    precip_type
+                ]
+            )
+            c += 1
 
         warning_data = warnings(forecast_data)
 
